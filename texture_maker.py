@@ -9,6 +9,9 @@ import os
 import sys
 import subprocess
 import threading
+import tempfile
+import urllib.request
+import webbrowser
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, colorchooser
 from pathlib import Path
@@ -26,6 +29,7 @@ except ImportError:
     HAS_NUMPY = False
 
 VERSION = "1.0.0"
+GITHUB_REPO = "SeanML8/DayZ-Auto-Retexture-Generator"
 
 # ─── PAA Conversion Paths ────────────────────────────────────────────────────
 
@@ -382,6 +386,38 @@ def _save_settings(settings):
         pass
 
 
+# ─── ToolTip ─────────────────────────────────────────────────────────────────
+
+
+class ToolTip:
+    """Hover tooltip for any Tkinter widget."""
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tip_window = None
+        widget.bind("<Enter>", self._show)
+        widget.bind("<Leave>", self._hide)
+
+    def _show(self, event=None):
+        if self.tip_window:
+            return
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 4
+        self.tip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(tw, text=self.text, justify=tk.LEFT, wraplength=320,
+                         background="#ffffe0", foreground="#000000",
+                         relief=tk.SOLID, borderwidth=1,
+                         font=("Segoe UI", 9), padx=6, pady=4)
+        label.pack()
+
+    def _hide(self, event=None):
+        if self.tip_window:
+            self.tip_window.destroy()
+            self.tip_window = None
+
+
 # ─── Main Application ────────────────────────────────────────────────────────
 
 
@@ -514,6 +550,9 @@ class TextureMakerApp:
         self.theme_btn = ttk.Button(title_frame, text="Light Mode" if self.dark_mode else "Dark Mode",
                                      command=self._toggle_theme)
         self.theme_btn.pack(side=tk.RIGHT)
+
+        self._update_frame = ttk.Frame(title_frame)
+        self._update_frame.pack(side=tk.RIGHT, padx=(0, 8))
 
         ttk.Label(title_frame, text=f"v{VERSION}", style="Subtitle.TLabel").pack(side=tk.RIGHT, padx=(0, 10))
 
@@ -668,6 +707,9 @@ class TextureMakerApp:
 
         # Initialize mode visibility
         self._on_mode_change()
+
+        # Check for updates
+        self.root.after(500, self._check_for_updates)
 
     # ─── Mode Toggle ──────────────────────────────────────────────────────
 
@@ -931,6 +973,202 @@ class TextureMakerApp:
         pct = (current / total) * 100 if total > 0 else 0
         self.root.after(0, lambda: self.progress_var.set(pct))
         self.root.after(0, lambda: self.progress_label.configure(text=message))
+
+    # ─── Auto Update ──────────────────────────────────────────────────────
+
+    def _check_for_updates(self):
+        """Check GitHub for a newer release in a background thread."""
+        def do_check():
+            try:
+                url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+                req = urllib.request.Request(url, headers={"Accept": "application/vnd.github.v3+json"})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                tag = data.get("tag_name", "")
+                latest = tag.lstrip("vV")
+                if latest and latest != VERSION:
+                    asset_url = ""
+                    for asset in data.get("assets", []):
+                        if asset["name"].lower().endswith(".exe"):
+                            asset_url = asset["browser_download_url"]
+                            break
+                    release_url = data.get("html_url", f"https://github.com/{GITHUB_REPO}/releases/latest")
+                    release_notes = data.get("body", "").strip()
+                    self.root.after(0, lambda: self._show_update_banner(latest, release_url, asset_url, release_notes))
+            except Exception:
+                pass  # Silent fail — no internet, rate limited, etc.
+        threading.Thread(target=do_check, daemon=True).start()
+
+    def _show_update_banner(self, latest_version, release_url, asset_url="", release_notes=""):
+        """Show an update-available button in the title bar."""
+        self._pending_update = {
+            "version": latest_version,
+            "release_url": release_url,
+            "asset_url": asset_url,
+            "release_notes": release_notes,
+        }
+
+        btn = tk.Button(
+            self._update_frame,
+            text=f"\u2b06 Update available: v{latest_version}",
+            font=("Segoe UI", 9, "bold"),
+            fg="#ffffff", bg="#2ea043", activeforeground="#ffffff", activebackground="#22863a",
+            bd=0, padx=10, pady=2, cursor="hand2",
+            command=self._show_update_dialog,
+        )
+        btn.pack(side=tk.RIGHT)
+        self._update_btn = btn
+        is_frozen = getattr(sys, 'frozen', False)
+        tip = f"Click to install v{latest_version}" if (is_frozen and asset_url) else f"Click to view release v{latest_version} on GitHub"
+        ToolTip(btn, tip)
+
+    def _show_update_dialog(self):
+        """Show a dialog with release notes and install/view button."""
+        info = self._pending_update
+        version = info["version"]
+        is_frozen = getattr(sys, 'frozen', False)
+
+        c = self._get_theme_colors()
+        dialog = tk.Toplevel(self.root)
+        dialog.title(f"Update available — v{version}")
+        dialog.configure(bg=c["bg"])
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        # Center on parent
+        dialog.withdraw()
+        dialog.update_idletasks()
+        w, h = 480, 480
+        x = self.root.winfo_x() + (self.root.winfo_width() - w) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - h) // 2
+        dialog.geometry(f"{w}x{h}+{x}+{y}")
+        dialog.deiconify()
+
+        ttk.Label(dialog, text=f"v{VERSION}  \u2192  v{version}", style="Title.TLabel").pack(
+            anchor="w", padx=16, pady=(16, 4))
+        ttk.Label(dialog, text="What's new:", style="Subtitle.TLabel").pack(
+            anchor="w", padx=16, pady=(0, 4))
+
+        # Footer
+        ttk.Label(dialog, text="built with <3 by Sean", style="Subtitle.TLabel").pack(
+            side=tk.BOTTOM, anchor="e", padx=16, pady=(4, 10))
+
+        # Buttons
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=16, pady=(0, 8))
+
+        # Release notes
+        notes_frame = ttk.Frame(dialog)
+        notes_frame.pack(fill=tk.BOTH, expand=True, padx=16, pady=(0, 8))
+        notes_scroll = ttk.Scrollbar(notes_frame)
+        notes_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        notes_text = tk.Text(
+            notes_frame, wrap=tk.WORD, font=("Segoe UI", 10),
+            bg=c["entry_bg"], fg=c["fg"], relief="flat", padx=8, pady=8,
+            cursor="arrow", yscrollcommand=notes_scroll.set,
+        )
+        notes_text.pack(fill=tk.BOTH, expand=True)
+        notes_scroll.config(command=notes_text.yview)
+        notes_text.insert("1.0", info["release_notes"] or "No release notes provided.")
+        notes_text.configure(state="disabled")
+
+        def do_update():
+            dialog.destroy()
+            if is_frozen and info["asset_url"]:
+                self._auto_update(version, info["asset_url"])
+            else:
+                webbrowser.open(info["release_url"])
+
+        action_text = "Install Update" if (is_frozen and info["asset_url"]) else "View on GitHub"
+        install_btn = tk.Button(
+            btn_frame, text=action_text, font=("Segoe UI", 10, "bold"),
+            fg="#ffffff", bg="#2ea043", activeforeground="#ffffff", activebackground="#22863a",
+            bd=0, padx=16, pady=6, cursor="hand2", command=do_update,
+        )
+        install_btn.pack(side=tk.RIGHT, padx=(8, 0))
+        cancel_btn = tk.Button(
+            btn_frame, text="Not Now", font=("Segoe UI", 10),
+            fg=c["fg"], bg=c["btn_bg"], activeforeground=c["fg"], activebackground=c["btn_active"],
+            bd=0, padx=16, pady=6, cursor="hand2", command=dialog.destroy,
+        )
+        cancel_btn.pack(side=tk.RIGHT)
+
+    def _auto_update(self, version, asset_url):
+        """Download the new exe and replace the current one."""
+        self._update_btn.configure(text=f"Downloading v{version}...", state="disabled", bg="#555555")
+        self._update_btn.update()
+
+        def do_download():
+            try:
+                exe_path = sys.executable
+                temp_dir = tempfile.gettempdir()
+                temp_exe = os.path.join(temp_dir, "DayZ Auto Retexture Generator_new.exe")
+
+                # Download with progress
+                req = urllib.request.Request(asset_url)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    total = int(resp.headers.get("Content-Length", 0))
+                    downloaded = 0
+                    with open(temp_exe, "wb") as f:
+                        while True:
+                            chunk = resp.read(65536)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total > 0:
+                                pct = int(downloaded / total * 100)
+                                self.root.after(0, lambda p=pct: self._update_btn.configure(
+                                    text=f"Downloading v{version}... {p}%"))
+
+                # VBS script: wait for exit, swap exe, relaunch
+                pid = os.getpid()
+                vbs_path = os.path.join(temp_dir, "_dayz_retex_update.vbs")
+                mei_dir = getattr(sys, '_MEIPASS', '')
+                vbs_content = (
+                    f'Set oShell = CreateObject("WScript.Shell")\r\n'
+                    f'Set oFso = CreateObject("Scripting.FileSystemObject")\r\n'
+                    f'Do While True\r\n'
+                    f'    On Error Resume Next\r\n'
+                    f'    Set colProcs = GetObject("winmgmts:").ExecQuery("SELECT * FROM Win32_Process WHERE ProcessId={pid}")\r\n'
+                    f'    On Error GoTo 0\r\n'
+                    f'    If colProcs.Count = 0 Then Exit Do\r\n'
+                    f'    WScript.Sleep 300\r\n'
+                    f'Loop\r\n'
+                    + (f'Do While oFso.FolderExists("{mei_dir}")\r\n    WScript.Sleep 300\r\nLoop\r\n' if mei_dir else '')
+                    + f'For i = 1 To 30\r\n'
+                    f'    On Error Resume Next\r\n'
+                    f'    oFso.CopyFile "{temp_exe}", "{exe_path}", True\r\n'
+                    f'    If Err.Number = 0 Then Exit For\r\n'
+                    f'    On Error GoTo 0\r\n'
+                    f'    WScript.Sleep 500\r\n'
+                    f'Next\r\n'
+                    f'oShell.Run "explorer.exe " & Chr(34) & "{exe_path}" & Chr(34), 0, False\r\n'
+                    f'WScript.Sleep 2000\r\n'
+                    f'On Error Resume Next\r\n'
+                    f'oFso.DeleteFile "{temp_exe}", True\r\n'
+                    f'oFso.DeleteFile WScript.ScriptFullName, True\r\n'
+                )
+                with open(vbs_path, "w") as f:
+                    f.write(vbs_content)
+
+                self.root.after(0, lambda vp=vbs_path: self._finish_update(vp))
+
+            except Exception as e:
+                err_msg = str(e)
+                self.root.after(0, lambda: self._update_btn.configure(
+                    text=f"\u2b06 Update failed — click to retry",
+                    state="normal", bg="#d73a49",
+                ))
+                self.root.after(0, lambda: messagebox.showerror("Update Failed", f"Could not download update:\n{err_msg}"))
+
+        threading.Thread(target=do_download, daemon=True).start()
+
+    def _finish_update(self, vbs_path):
+        """Launch the updater script and close the app."""
+        subprocess.Popen(["wscript.exe", vbs_path])
+        self.root.destroy()
 
     # ─── Theme Toggle ─────────────────────────────────────────────────────
 
