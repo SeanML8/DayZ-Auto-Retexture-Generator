@@ -4,11 +4,14 @@ A desktop tool for generating color variants of DayZ item textures. Load a sourc
 
 ## Features
 
+- **Live Preview** — Side-by-side original and recolored preview that updates in real-time as you adjust colors and settings
+- **Synchronized Zoom & Pan** — Scroll to zoom, drag to pan — both preview images stay in sync. Minimap overlay shows your current viewport position
 - **Colorize Mode** — Pick target colors from presets or a custom color picker, and recolor textures while preserving original detail and luminance
-- **Hue Shift Mode** — Automatically generate evenly-spaced hue rotations around the color wheel
+- **Hue Shift Mode** — Automatically generate evenly-spaced hue rotations around the color wheel, with an interactive preview slider
 - **PAA Support** — Read and write DayZ's PAA texture format directly (requires DayZ Tools)
 - **Multiple Formats** — Input/output support for PNG, TGA, PAA, JPG, and BMP
 - **Auto-Detect DayZ Tools** — Scans Steam library folders to find ImageToPAA.exe automatically
+- **First-Launch Setup** — Guided DayZ Tools detection on first run, with manual path option
 - **Preset Color Palettes** — Military, Urban, Earth Tones, Survival, and Bright presets with 8 colors each
 - **Adjustable Strength** — Control how aggressively colors are applied (10–100%)
 - **Dark/Light Theme** — Toggle between themes, preference is saved between sessions
@@ -36,10 +39,11 @@ python texture_maker.py
 1. Launch the app — on first run it will auto-detect your DayZ Tools installation
 2. Click **Browse** to select a source texture (PNG, TGA, PAA, etc.)
 3. Choose a mode:
-   - **Colorize** — select colors from presets or add custom colors
-   - **Hue Shift** — set the number of variants to generate
-4. Set your output folder, filename prefix, and format
-5. Click **Generate Textures**
+   - **Colorize** — select colors from presets or add custom colors, click a swatch to preview it
+   - **Hue Shift** — set the number of variants and use the preview slider to scrub through hue shifts
+4. Use the live preview panel to compare original and recolored textures — scroll to zoom in, drag to pan
+5. Set your output folder, filename prefix, and format
+6. Click **Generate Textures**
 
 Output files are named `{prefix}_{color}.{format}` and saved to your chosen folder.
 
