@@ -1,21 +1,41 @@
 # DayZ Auto Retexture Generator
 
-A desktop tool for generating color variants of DayZ item textures. Load a source texture, pick your colors, and batch-export recolored variants in seconds.
+A desktop tool for generating color variants of DayZ item textures. Load a source texture, pick your colors, tweak adjustments, and batch-export recolored variants in seconds.
 
 ## Features
 
-- **Live Preview** — Side-by-side original and recolored preview that updates in real-time as you adjust colors and settings
-- **Synchronized Zoom & Pan** — Scroll to zoom, drag to pan — both preview images stay in sync. Minimap overlay shows your current viewport position
-- **Colorize Mode** — Pick target colors from presets or a custom color picker, and recolor textures while preserving original detail and luminance
-- **Hue Shift Mode** — Automatically generate evenly-spaced hue rotations around the color wheel, with an interactive preview slider
-- **PAA Support** — Read and write DayZ's PAA texture format directly (requires DayZ Tools)
-- **Multiple Formats** — Input/output support for PNG, TGA, PAA, JPG, and BMP
-- **Auto-Detect DayZ Tools** — Scans Steam library folders to find ImageToPAA.exe automatically
-- **First-Launch Setup** — Guided DayZ Tools detection on first run, with manual path option
-- **Preset Color Palettes** — Military, Urban, Earth Tones, Survival, and Bright presets with 8 colors each
-- **Adjustable Strength** — Control how aggressively colors are applied (10–100%)
-- **Dark/Light Theme** — Toggle between themes, preference is saved between sessions
-- **Auto-Update** — Checks GitHub for new releases and can update in-place
+### Live Preview
+- **Side-by-side preview** — Original and recolored textures update in real-time
+- **Synchronized zoom & pan** — Scroll to zoom, drag to pan, both images stay in sync
+- **Minimap overlay** — Shows viewport position when zoomed in
+- **Always-on preview** — See adjustments applied even before selecting colors
+
+### Color Modes
+- **Colorize Mode** — Pick target colors from presets or a custom color picker, preserving original detail and luminance
+- **Hue Shift Mode** — Generate evenly-spaced hue rotations with an interactive preview slider
+- **5 preset palettes** — Military, Urban, Earth Tones, Survival, and Bright (8 colors each)
+- **Adjustable strength** — Control how aggressively colors are applied
+
+### Texture Adjustments
+- **Brightness / Contrast / Saturation** — Fine-tune with sliders, live preview updates instantly
+- **Mask support** — Load a grayscale mask to colorize specific regions only (white = colorize, black = keep original)
+- **Wear & tear** — Apply procedural scratches, dirt, or weathering overlays with adjustable intensity
+- **Normal map detection** — Warns you if you accidentally load a normal/specular map
+
+### Config Generator Integration
+- **Export to Config Generator** — Output PAA files named for auto-matching in the DayZ Retexture Config Generator
+- Configurable mod folder, prefix, and item name with live filename preview
+
+### File Support
+- **Input** — PNG, TGA, PAA, JPG, BMP
+- **Output** — PNG, TGA, or PAA (via DayZ Tools)
+- **Auto-detect DayZ Tools** — Scans Steam library folders automatically
+- **First-launch setup** — Guided DayZ Tools detection with manual path fallback
+
+### UI
+- **Tabbed interface** — Colors, Adjustments, and Output tabs keep controls organized
+- **Dark/Light theme** — Toggle between themes, preference saved between sessions
+- **Auto-update** — Checks GitHub for new releases and can update in-place
 
 ## Getting Started
 
@@ -38,11 +58,11 @@ python texture_maker.py
 
 1. Launch the app — on first run it will auto-detect your DayZ Tools installation
 2. Click **Browse** to select a source texture (PNG, TGA, PAA, etc.)
-3. Choose a mode:
-   - **Colorize** — select colors from presets or add custom colors, click a swatch to preview it
-   - **Hue Shift** — set the number of variants and use the preview slider to scrub through hue shifts
-4. Use the live preview panel to compare original and recolored textures — scroll to zoom in, drag to pan
-5. Set your output folder, filename prefix, and format
+3. **Colors tab** — Choose a mode and select colors:
+   - **Colorize** — pick from presets or add custom colors, click a swatch to preview
+   - **Hue Shift** — set variant count and use the preview slider to scrub through shifts
+4. **Adjustments tab** — Fine-tune brightness, contrast, saturation; load a mask; add wear & tear
+5. **Output tab** — Set output folder, naming, and format; optionally enable Config Generator export
 6. Click **Generate Textures**
 
 Output files are named `{prefix}_{color}.{format}` and saved to your chosen folder.
