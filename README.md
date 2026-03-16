@@ -1,25 +1,50 @@
 # DayZ Auto Retexture Generator
 
-A desktop tool for generating color variants of DayZ item textures. Load a source texture, pick your colors, tweak adjustments, and batch-export recolored variants in seconds.
+A desktop tool for generating color variants of DayZ item textures. Load a source texture, pick your colors, paint masks for fine detail, and batch-export recolored variants in seconds.
 
 ## Features
 
 ### Live Preview
 - **Side-by-side preview** — Original and recolored textures update in real-time
 - **Synchronized zoom & pan** — Scroll to zoom, drag to pan, both images stay in sync
+- **Pan past edges** — Zoom in and pan beyond image borders for comfortable edge editing
 - **Minimap overlay** — Shows viewport position when zoomed in
-- **Always-on preview** — See adjustments applied even before selecting colors
+
+### Color Picker
+- **Color square** — HSV color square with hue bar for precise color selection
+- **Hex input** — Enter hex codes directly
+- **Eyedropper tool** — Pick colors directly from the loaded texture
+- **Named colors** — Name your colors when adding, or double-click to rename later
+- **Color presets** — Save and load named color sets for reuse
+- **Auto-save** — Selected colors persist across sessions
+
+### Zones System
+- **Multi-zone colorization** — Create named zones (e.g., "Fabric", "Straps", "Buckles") with independent colors
+- **Base zone** — First zone covers the entire texture, additional zones paint over specific areas
+- **Per-zone adjustments** — Each zone has its own brightness, contrast, saturation, and color strength
+- **Color sets** — Snapshot all zone colors as a set, generate one output per set
+- **Set Color button** — Pick zone colors directly from the Adjustments tab without switching tabs
+
+### Paint Mask Tools
+- **Paint / Erase** — Brush tool with adjustable size to define zone areas
+- **Fill** — Flood fill enclosed regions within a mask
+- **Eyedropper** — Pick a color from the texture and set it as the zone's color
+- **Soften** — Blur mask edges for smooth transitions between zones
+- **Invert / Fill All / Clear All** — Quick mask operations
+- **Undo (Ctrl+Z)** — Up to 20 levels of mask undo
+- **Right-click pan** — Pan the image while in paint mode
+- **Colored overlays** — See each zone's mask tinted with its actual color on the original preview
 
 ### Color Modes
-- **Colorize Mode** — Pick target colors from presets or a custom color picker, preserving original detail and luminance
+- **Colorize Mode** — Pick target colors, preserving original detail and luminance
 - **Hue Shift Mode** — Generate evenly-spaced hue rotations with an interactive preview slider
-- **5 preset palettes** — Military, Urban, Earth Tones, Survival, and Bright (8 colors each)
 - **Adjustable strength** — Control how aggressively colors are applied
 
 ### Texture Adjustments
-- **Brightness / Contrast / Saturation** — Fine-tune with sliders, live preview updates instantly
-- **Mask support** — Load a grayscale mask to colorize specific regions only (white = colorize, black = keep original)
-- **Wear & tear** — Apply procedural scratches, dirt, or weathering overlays with adjustable intensity
+- **Brightness / Contrast / Saturation** — Fine-tune with sliders, per-zone when zones are enabled
+- **Base mask support** — Load a grayscale mask to restrict all zones to specific regions
+- **Wear & tear** — Apply overlay-based wear with 27 bundled overlays, desaturation in worn areas
+- **Custom overlays** — Load your own wear overlay images
 - **Normal map detection** — Warns you if you accidentally load a normal/specular map
 
 ### Config Generator Integration
@@ -35,7 +60,7 @@ A desktop tool for generating color variants of DayZ item textures. Load a sourc
 ### UI
 - **Tabbed interface** — Colors, Adjustments, and Output tabs keep controls organized
 - **Dark/Light theme** — Toggle between themes, preference saved between sessions
-- **Auto-update** — Checks GitHub for new releases and can update in-place
+- **Auto-update** — Checks GitHub for new releases with changelog dialog and in-place update
 
 ## Getting Started
 
@@ -58,10 +83,12 @@ python texture_maker.py
 
 1. Launch the app — on first run it will auto-detect your DayZ Tools installation
 2. Click **Browse** to select a source texture (PNG, TGA, PAA, etc.)
-3. **Colors tab** — Choose a mode and select colors:
-   - **Colorize** — pick from presets or add custom colors, click a swatch to preview
-   - **Hue Shift** — set variant count and use the preview slider to scrub through shifts
-4. **Adjustments tab** — Fine-tune brightness, contrast, saturation; load a mask; add wear & tear
+3. **Colors tab** — Pick colors using the color square, hex input, or eyedropper
+   - Add colors with names, save color presets for reuse
+4. **Adjustments tab** — Enable zones for multi-color retexturing:
+   - Create zones, paint masks to define areas, set per-zone colors and adjustments
+   - Use Paint, Erase, Fill, Eyedropper, and Soften tools
+   - Add wear & tear from bundled or custom overlays
 5. **Output tab** — Set output folder, naming, and format; optionally enable Config Generator export
 6. Click **Generate Textures**
 
